@@ -69,7 +69,3 @@ run.bat input.mp4 output.mp4
 
 - Input: MP4, AVI, MKV, MOV, WMV, FLV
 - Output: MP4 (H.265/HEVC)
-
-## License
-
-MIT License 

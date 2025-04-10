@@ -63,6 +63,41 @@ func CheckFFmpeg() (string, error) {
 	return "", fmt.Errorf("ffmpeg not found")
 }
 
+// CheckFFprobe checks if ffprobe is available in PATH or current directory
+func CheckFFprobe() (string, error) {
+	// Get current working directory
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current directory: %v", err)
+	}
+
+	// Set executable suffix based on OS
+	exeSuffix := ""
+	if runtime.GOOS == "windows" {
+		exeSuffix = ".exe"
+	}
+
+	// Check in current directory
+	localFFprobe := filepath.Join(currentDir, "ffprobe"+exeSuffix)
+	if _, err := os.Stat(localFFprobe); err == nil {
+		return localFFprobe, nil
+	}
+
+	// Check in parent directory
+	parentFFprobe := filepath.Join(currentDir, "..", "ffprobe"+exeSuffix)
+	if _, err := os.Stat(parentFFprobe); err == nil {
+		return parentFFprobe, nil
+	}
+
+	// Then check in PATH
+	ffprobePath, err := exec.LookPath("ffprobe")
+	if err == nil {
+		return ffprobePath, nil
+	}
+
+	return "", fmt.Errorf("ffprobe not found")
+}
+
 // downloadFile downloads a file from a URL and saves it to disk
 func downloadFile(url, filename string) error {
 	fmt.Printf("Downloading FFmpeg from %s\n", url)
@@ -86,7 +121,7 @@ func downloadFile(url, filename string) error {
 	return nil
 }
 
-// extractWindows extracts ffmpeg.exe from a zip archive
+// extractWindows extracts ffmpeg.exe and ffprobe.exe from a zip archive
 func extractWindows(filename string) error {
 	archive, err := zip.OpenReader(filename)
 	if err != nil {
@@ -94,33 +129,37 @@ func extractWindows(filename string) error {
 	}
 	defer archive.Close()
 
+	// Extract both ffmpeg.exe and ffprobe.exe
 	for _, f := range archive.File {
-		// Check if the file is ffmpeg.exe in the bin directory
+		var dstName string
 		if strings.HasSuffix(f.Name, "bin/ffmpeg.exe") || strings.HasSuffix(f.Name, "bin\\ffmpeg.exe") {
-			dstFile, err := os.OpenFile("ffmpeg.exe", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-			if err != nil {
-				return fmt.Errorf("failed to create ffmpeg.exe: %v", err)
-			}
-			defer dstFile.Close()
+			dstName = "ffmpeg.exe"
+		} else if strings.HasSuffix(f.Name, "bin/ffprobe.exe") || strings.HasSuffix(f.Name, "bin\\ffprobe.exe") {
+			dstName = "ffprobe.exe"
+		} else {
+			continue
+		}
 
-			// create new file in current directory
-			srcFile, err := f.Open()
-			if err != nil {
-				return fmt.Errorf("failed to open ffmpeg.exe from zip: %v", err)
-			}
-			defer srcFile.Close()
+		dstFile, err := os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return fmt.Errorf("failed to create %s: %v", dstName, err)
+		}
+		defer dstFile.Close()
 
-			// copy the file
-			if _, err := io.Copy(dstFile, srcFile); err != nil {
-				return fmt.Errorf("failed to extract ffmpeg.exe: %v", err)
-			}
-			return nil
+		srcFile, err := f.Open()
+		if err != nil {
+			return fmt.Errorf("failed to open %s from zip: %v", dstName, err)
+		}
+		defer srcFile.Close()
+
+		if _, err := io.Copy(dstFile, srcFile); err != nil {
+			return fmt.Errorf("failed to extract %s: %v", dstName, err)
 		}
 	}
-	return fmt.Errorf("ffmpeg.exe not found in zip archive")
+	return nil
 }
 
-// extractLinux extracts ffmpeg from a tar.xz archive
+// extractLinux extracts ffmpeg and ffprobe from a tar.xz archive
 func extractLinux(filename string) error {
 	// Extract the tar.xz file
 	cmd := exec.Command("tar", "xf", filename)
@@ -128,33 +167,38 @@ func extractLinux(filename string) error {
 		return fmt.Errorf("extraction failed: %v", err)
 	}
 
-	// Walk through extracted directory to find ffmpeg binary
-	var ffmpegPath string
+	// Walk through extracted directory to find ffmpeg and ffprobe binaries
+	binaries := map[string]string{
+		"ffmpeg":  "",
+		"ffprobe": "",
+	}
+
 	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.Name() == "ffmpeg" && strings.Contains(path, "bin/ffmpeg") {
-			ffmpegPath = path
-			return nil
+			binaries["ffmpeg"] = path
+		} else if info.Name() == "ffprobe" && strings.Contains(path, "bin/ffprobe") {
+			binaries["ffprobe"] = path
 		}
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to find ffmpeg binary: %v", err)
-	}
-	if ffmpegPath == "" {
-		return fmt.Errorf("ffmpeg binary not found in extracted files")
+		return fmt.Errorf("failed to find binaries: %v", err)
 	}
 
-	// Move ffmpeg binary to current directory
-	if err := os.Rename(ffmpegPath, "ffmpeg"); err != nil {
-		return fmt.Errorf("failed to move ffmpeg binary: %v", err)
-	}
-
-	// Make ffmpeg executable
-	if err := os.Chmod("ffmpeg", 0755); err != nil {
-		return fmt.Errorf("failed to make ffmpeg executable: %v", err)
+	// Move binaries to current directory
+	for name, path := range binaries {
+		if path == "" {
+			return fmt.Errorf("%s binary not found in extracted files", name)
+		}
+		if err := os.Rename(path, name); err != nil {
+			return fmt.Errorf("failed to move %s binary: %v", name, err)
+		}
+		if err := os.Chmod(name, 0755); err != nil {
+			return fmt.Errorf("failed to make %s executable: %v", name, err)
+		}
 	}
 
 	return nil

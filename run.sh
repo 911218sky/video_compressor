@@ -11,19 +11,23 @@ read -p "Enter input file name: " INPUT_FILE
 read -p "Enter output file name: " OUTPUT_FILE
 
 # Set default parameters
+MODE="compress"
 FPS=32
 RESOLUTION="1080p"
 BITRATE=0
 PRESET="p3"
 CQ=32
+# If width and height are set, resolution will be ignored (0 is auto)
 WIDTH=0
 HEIGHT=0
 ENCODER="gpu"
 
 # Display current parameters
+echo ================================================
 echo -e "${GREEN}Current parameters:${NC}"
 echo "Input file: $INPUT_FILE"
 echo "Output file: $OUTPUT_FILE"
+echo "Mode: $MODE"
 echo "Frame rate: $FPS"
 echo "Resolution: $RESOLUTION"
 echo "Bitrate: $BITRATE"
@@ -32,6 +36,7 @@ echo "Quality value: $CQ"
 echo "Width: $WIDTH"
 echo "Height: $HEIGHT"
 echo "Encoder: $ENCODER"
+echo ================================================
 
 # Check if input file exists
 if [ ! -f "$INPUT_FILE" ]; then
@@ -46,7 +51,7 @@ if [ ! -d "$OUTPUT_DIR" ]; then
 fi
 
 # Run video compression
-./video_compressor -input "$INPUT_FILE" -output "$OUTPUT_FILE" -fps "$FPS" -resolution "$RESOLUTION" -bitrate "$BITRATE" -preset "$PRESET" -cq "$CQ" -width "$WIDTH" -height "$HEIGHT" -encoder "$ENCODER"
+./video_compressor -input "$INPUT_FILE" -output "$OUTPUT_FILE" -mode "$MODE" -fps "$FPS" -resolution "$RESOLUTION" -bitrate "$BITRATE" -preset "$PRESET" -cq "$CQ" -width "$WIDTH" -height "$HEIGHT" -encoder "$ENCODER"
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Video compression completed!${NC}"

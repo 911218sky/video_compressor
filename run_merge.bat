@@ -2,19 +2,19 @@
 setlocal enabledelayedexpansion
 
 :: Get user input for input and output files
-set /p INPUT_FILE="Enter input file name: "
+set /p INPUT_FILE="Enter input directory name: "
 set /p OUTPUT_FILE="Enter output file name: "
 
 :: Set default parameters
-set MODE=compress
+set MODE=merge
 set FPS=32
-set RESOLUTION=1080p
+set RESOLUTION=""
 set BITRATE=0
 set PRESET=p3
 set CQ=32
 :: If width and height are set, resolution will be ignored (0 is auto)
-set WIDTH=1080
-set HEIGHT=2880
+set WIDTH=0
+set HEIGHT=0
 set ENCODER=gpu
 
 :: Display current parameters

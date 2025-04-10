@@ -9,6 +9,7 @@ type VideoConfig struct {
 	Cq         int
 	Width      int
 	Height     int
+	Encoder    string // "gpu" for NVIDIA HEVC or "cpu" for libx265
 }
 
 // GetResolutionSettings returns width and height based on resolution string

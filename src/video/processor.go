@@ -54,61 +54,58 @@ func CompressVideo(inputPath, outputPath string, videoConfig config.VideoConfig)
 	if videoConfig.Resolution != "" {
 		videoConfig.Width, videoConfig.Height, videoConfig.Bitrate = config.GetResolutionSettings(videoConfig.Resolution)
 	}
-	// Construct ffmpeg command
-	cmd := exec.Command(ffmpegPath,
-		"-i", inputPath,
-		"-c:v", "hevc_nvenc", // Use NVIDIA GPU HEVC encoder
-		"-preset", videoConfig.Preset,
-		"-rc", "vbr", // Variable bitrate
-		"-cq", strconv.Itoa(videoConfig.Cq),
-		"-b:v", fmt.Sprintf("%dk", videoConfig.Bitrate),
-		"-maxrate", fmt.Sprintf("%dk", videoConfig.Bitrate),
-		"-bufsize", fmt.Sprintf("%dk", videoConfig.Bitrate*2),
-		"-r", strconv.Itoa(videoConfig.Fps),
-		"-vf", fmt.Sprintf("scale=%d:%d", videoConfig.Width, videoConfig.Height),
-		outputPath,
-		"-y",
-	)
+
+	var cmd *exec.Cmd
+	if videoConfig.Encoder == "gpu" {
+		// Try GPU encoder first if specified
+		cmd = exec.Command(ffmpegPath,
+			"-i", inputPath,
+			"-c:v", "hevc_nvenc", // Use NVIDIA GPU HEVC encoder
+			"-preset", videoConfig.Preset,
+			"-rc", "vbr", // Variable bitrate
+			"-cq", strconv.Itoa(videoConfig.Cq),
+			"-b:v", fmt.Sprintf("%dk", videoConfig.Bitrate),
+			"-maxrate", fmt.Sprintf("%dk", videoConfig.Bitrate),
+			"-bufsize", fmt.Sprintf("%dk", videoConfig.Bitrate*2),
+			"-r", strconv.Itoa(videoConfig.Fps),
+			"-vf", fmt.Sprintf("scale=%d:%d", videoConfig.Width, videoConfig.Height),
+			outputPath,
+			"-y",
+		)
+	} else {
+		// Use CPU encoder
+		cmd = exec.Command(ffmpegPath,
+			"-i", inputPath,
+			"-c:v", "libx265", // Use CPU HEVC encoder
+			"-preset", videoConfig.Preset,
+			"-crf", strconv.Itoa(videoConfig.Cq),
+			"-b:v", fmt.Sprintf("%dk", videoConfig.Bitrate),
+			"-maxrate", fmt.Sprintf("%dk", videoConfig.Bitrate),
+			"-bufsize", fmt.Sprintf("%dk", videoConfig.Bitrate*2),
+			"-r", strconv.Itoa(videoConfig.Fps),
+			"-vf", fmt.Sprintf("scale=%d:%d", videoConfig.Width, videoConfig.Height),
+			outputPath,
+			"-y",
+		)
+	}
 
 	// Create pipes for real-time output
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	fmt.Println("Starting video compression with NVIDIA GPU encoder...")
+	fmt.Printf("Starting video compression with %s encoder...\n", 
+		map[string]string{"gpu": "NVIDIA GPU", "cpu": "CPU"}[videoConfig.Encoder])
 	fmt.Println("Command:", cmd.String())
 
 	// Run the command
 	err = cmd.Run()
 	if err != nil {
-		// If NVIDIA encoder fails, try with CPU encoder
-		if strings.Contains(err.Error(), "hevc_nvenc") {
-			fmt.Println("\nNVIDIA GPU encoder not available, switching to CPU encoder...")
-			cmd = exec.Command(ffmpegPath,
-				"-i", inputPath,
-				"-c:v", "libx265", // Use CPU HEVC encoder
-				"-preset", "medium",
-				"-crf", strconv.Itoa(videoConfig.Cq),
-				"-b:v", fmt.Sprintf("%dk", videoConfig.Bitrate),
-				"-maxrate", fmt.Sprintf("%dk", videoConfig.Bitrate),
-				"-bufsize", fmt.Sprintf("%dk", videoConfig.Bitrate*2),
-				"-r", strconv.Itoa(videoConfig.Fps),
-				"-vf", fmt.Sprintf("scale=%d:%d", videoConfig.Width, videoConfig.Height),
-				outputPath,
-				"-y",
-			)
-
-			// Set up real-time output for CPU encoder
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-
-			fmt.Println("Command:", cmd.String())
-			err = cmd.Run()
-			if err != nil {
-				return fmt.Errorf("ffmpeg error: %v", err)
-			}
-		} else {
-			return fmt.Errorf("ffmpeg error: %v", err)
+		// If GPU encoder was selected but failed, offer to try CPU encoder
+		if videoConfig.Encoder == "gpu" && strings.Contains(err.Error(), "hevc_nvenc") {
+			fmt.Println("\nNVIDIA GPU encoder failed. Please try using the CPU encoder instead.")
+			return fmt.Errorf("GPU encoder error: %v", err)
 		}
+		return fmt.Errorf("ffmpeg error: %v", err)
 	}
 
 	// Get new size and print statistics

@@ -17,12 +17,13 @@ func main() {
 
 	// Video compression parameters
 	fps := flag.Int("fps", 32, "Frame rate (default: 32)")
-	resolution := flag.String("resolution", "720p", "Video resolution (options: 1080p, 720p, 480p)")
+	resolution := flag.String("resolution", "1080p", "Video resolution (options: 1080p, 720p, 480p)")
 	bitrate := flag.Int("bitrate", 0, "Custom bitrate in Kbps (0 for default)")
 	preset := flag.String("preset", "p7", "Encoder preset (p1=fastest, p7=best quality)")
 	cq := flag.Int("cq", 32, "Constant quality value (0-51, lower is better)")
 	width := flag.Int("width", 0, "Custom width (0 for default)")
 	height := flag.Int("height", 0, "Custom height (0 for default)")
+	encoder := flag.String("encoder", "gpu", "Encoder type (options: gpu, cpu)")
 
 	flag.Parse()
 
@@ -50,6 +51,7 @@ func main() {
 		Cq:         *cq,
 		Width:      *width,
 		Height:     *height,
+		Encoder:    *encoder,
 	}
 
 	// If custom width/height is specified, clear resolution to prevent override

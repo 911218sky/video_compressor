@@ -2,28 +2,6 @@
 
 A powerful video compression tool that supports both GPU (NVIDIA) and CPU encoding, significantly reducing video file sizes while maintaining good quality. The tool also includes batch processing and video merging capabilities.
 
-## Features
-
-- High-performance video compression with configurable quality settings
-- Support for NVIDIA GPU acceleration (HEVC/H.265)
-- Automatic fallback to CPU encoding if GPU is not available
-- Multiple resolution presets (1080p, 720p, 480p)
-- Customizable compression parameters
-- Cross-platform support (Windows, Linux, macOS)
-- Automatic FFmpeg installation if not present
-- Batch processing support
-- Video merging functionality
-- Progress bar display during compression
-- Estimated time remaining calculation
-
-## Requirements
-
-- Go 1.22 or later
-- FFmpeg (automatically downloaded if not present)
-- NVIDIA GPU (optional, for hardware acceleration)
-- At least 4GB RAM
-- 1GB free disk space for installation
-
 ## Installation
 
 ### Option 1: Direct Download (Recommended)

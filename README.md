@@ -26,6 +26,17 @@ A powerful video compression tool that supports both GPU (NVIDIA) and CPU encodi
 
 ## Installation
 
+### Option 1: Direct Download (Recommended)
+1. Download the latest release from [GitHub Releases](https://github.com/911218sky/video_compressor/releases)
+2. Extract all files to your desired location. Make sure you have these files in the same directory:
+   - `video_compressor.exe` (Main program executable)
+   - `run.bat` (Single video compression script)
+   - `run_merge.bat` (Video merging script)
+   - `build.sh` (Optional, only needed for source compilation)
+   - `run.sh` (Optional, for Linux/macOS users only)
+3. Done! You can now use the tool directly by running either `run.bat` or `run_merge.bat`
+
+### Option 2: Build from Source
 1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/video_compressor.git

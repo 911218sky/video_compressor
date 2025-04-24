@@ -9,6 +9,7 @@ USE_UPX=true
 UPX_LEVEL=6
 KEEP_UNCOMPRESSED=true
 
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in

@@ -1,0 +1,43 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        
+    - name: Install UPX
+      run: sudo apt-get update && sudo apt-get install -y upx
+        
+    - name: Build
+      run: |
+        chmod +x ./build.sh
+        ./build.sh
+        
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build/video_compressor.exe
+          build/video_compressor
+          build/video_compressor_mac
+          build/upx/video_compressor.exe
+          build/upx/video_compressor
+          build/upx/video_compressor_mac
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

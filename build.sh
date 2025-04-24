@@ -48,6 +48,14 @@ compile_and_compress() {
     local os=$1
     local output_name=$2
     local goos=$3
+    local mini_output_name
+    
+    # Handle .exe files differently
+    if [[ $output_name == *.exe ]]; then
+        mini_output_name="${output_name%.*}-mini.exe"
+    else
+        mini_output_name="${output_name}-mini"
+    fi
     
     echo -e "${GREEN}Compiling ${os} version...${NC}"
     GOOS=$goos GOARCH=amd64 go build -ldflags="-s -w" -o "build/${output_name}" ./src
@@ -59,10 +67,10 @@ compile_and_compress() {
             mkdir -p build/upx
             
             # Copy to upx directory for compression
-            cp "build/${output_name}" "build/upx/${output_name}"
+            cp "build/${output_name}" "build/upx/${mini_output_name}"
             
             echo -e "${GREEN}Compressing ${os} binary with UPX...${NC}"
-            upx --best --lzma -$UPX_LEVEL "build/upx/${output_name}"
+            upx --best --lzma -$UPX_LEVEL "build/upx/${mini_output_name}"
         fi
     else
         echo "${os} version compilation failed!"

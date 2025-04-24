@@ -36,9 +36,9 @@ jobs:
           build/video_compressor.exe
           build/video_compressor
           build/video_compressor_mac
-          build/upx/video_compressor.exe
-          build/upx/video_compressor
-          build/upx/video_compressor_mac
+          build/upx/video_compressor-mini.exe
+          build/upx/video_compressor-mini
+          build/upx/video_compressor_mac-mini
         draft: false
         prerelease: false
         generate_release_notes: true

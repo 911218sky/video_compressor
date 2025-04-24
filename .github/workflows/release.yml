@@ -41,7 +41,7 @@ jobs:
           build/upx/video_compressor_mac-mini
         draft: false
         prerelease: false
-        generate_release_notes: true
+        generate_release_notes: false
         name: "Video Compressor ${{ github.ref_name }}"
         body: ""
       env:

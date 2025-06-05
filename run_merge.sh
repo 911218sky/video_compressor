@@ -16,7 +16,7 @@ WIDTH=0      # If width and height are set (>0), resolution will be ignored
 HEIGHT=0
 ENCODER="gpu"
 # mp4, mkv, avi, flv, webm, mov, wmv, ts
-OUTPUT_EXTENSION="mov"
+OUTPUT_EXTENSION="mp4"
 
 # Show current parameters
 echo ================================================

@@ -22,7 +22,7 @@ WIDTH=0
 HEIGHT=0
 ENCODER="gpu"
 # mp4, mkv, avi, flv, webm, mov, wmv, ts
-OUTPUT_EXTENSION="ts"
+OUTPUT_EXTENSION="mp4"
 
 # Display current parameters
 echo ================================================

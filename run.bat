@@ -25,7 +25,7 @@ set "WIDTH=0"
 set "HEIGHT=0"
 set "ENCODER=gpu"
 REM mp4, mkv, avi, flv, webm, mov, wmv, ts
-set "OUTPUT_EXTENSION=ts"
+set "OUTPUT_EXTENSION=mp4"
 
 REM Display current parameters
 echo ================================================

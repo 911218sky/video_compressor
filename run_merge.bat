@@ -18,7 +18,7 @@ set HEIGHT=0
 @REM gpu, cpu
 set ENCODER=gpu
 @REM mp4, mkv, avi, flv, webm, mov, wmv, ts
-set OUTPUT_EXTENSION=mov
+set OUTPUT_EXTENSION=mp4
 
 :: Show current parameters
 echo ================================================

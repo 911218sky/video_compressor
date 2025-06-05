@@ -1,55 +1,76 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal EnableDelayedExpansion
 
-:: Get user input for input and output files
-set /p INPUT_FILE="Enter input directory name: "
-set /p OUTPUT_FILE="Enter output file name: "
+:: Read user input
+set /p INPUT_FILE=Enter input file or directory name: 
+set /p OUTPUT_FILE=Enter output file name: 
 
-:: Set default parameters
+:: Default parameters
 set MODE=merge
 set FPS=32
-set RESOLUTION=""
+set RESOLUTION=
 set BITRATE=0
 set PRESET=p3
 set CQ=32
-:: If width and height are set, resolution will be ignored (0 is auto)
+@REM 0 is auto (If width and height are set >0, resolution will be ignored)
 set WIDTH=0
 set HEIGHT=0
+@REM gpu, cpu
 set ENCODER=gpu
+@REM mp4, mkv, avi, flv, webm, mov, wmv, ts
+set OUTPUT_EXTENSION=mov
 
-:: Display current parameters
+:: Show current parameters
 echo ================================================
 echo Current parameters:
-echo Input file: %INPUT_FILE%
-echo Output file: %OUTPUT_FILE%
-echo Mode: %MODE%
-echo Frame rate: %FPS%
-echo Resolution: %RESOLUTION%
-echo Bitrate: %BITRATE%
-echo Preset: %PRESET%
-echo Quality value: %CQ%
-echo Width: %WIDTH%
-echo Height: %HEIGHT%
-echo Encoder: %ENCODER%
+echo Input file:           %INPUT_FILE%
+echo Output file:          %OUTPUT_FILE%
+echo Mode:                 %MODE%
+echo Frame rate:           %FPS%
+echo Resolution:           %RESOLUTION%
+echo Bitrate:              %BITRATE%
+echo Preset:               %PRESET%
+echo Quality value (CQ):   %CQ%
+echo Width:                %WIDTH%
+echo Height:               %HEIGHT%
+echo Encoder:              %ENCODER%
+echo Output extension:     %OUTPUT_EXTENSION%
 echo ================================================
 
-:: Check if input file exists
+:: Check if input file or directory exists
 if not exist "%INPUT_FILE%" (
-    echo Error: Input file %INPUT_FILE% not found
+    echo Error: Input "%INPUT_FILE%" not found.
+    pause
     exit /b 1
 )
 
-:: Create output directory
+:: Create output directory if it does not exist
 for %%I in ("%OUTPUT_FILE%") do set "OUTPUT_DIR=%%~dpI"
-if not exist "%OUTPUT_DIR%" mkdir "%OUTPUT_DIR%"
+if not exist "%OUTPUT_DIR%" (
+    mkdir "%OUTPUT_DIR%"
+)
 
-:: Run video compression
-video_compressor.exe -input "%INPUT_FILE%" -output "%OUTPUT_FILE%" -mode %MODE% -fps %FPS% -resolution %RESOLUTION% -bitrate %BITRATE% -preset %PRESET% -cq %CQ% -width %WIDTH% -height %HEIGHT% -encoder %ENCODER%
+:: Run Go program
+go run src\main.go ^
+    -input "%INPUT_FILE%" ^
+    -output "%OUTPUT_FILE%" ^
+    -mode "%MODE%" ^
+    -fps %FPS% ^
+    -resolution "%RESOLUTION%" ^
+    -bitrate %BITRATE% ^
+    -preset "%PRESET%" ^
+    -cq %CQ% ^
+    -width %WIDTH% ^
+    -height %HEIGHT% ^
+    -encoder "%ENCODER%" ^
+    -output-extension "%OUTPUT_EXTENSION%"
 
+:: Show message based on result
 if %ERRORLEVEL% equ 0 (
     echo Video compression completed!
-    pause
 ) else (
     echo Video compression failed!
-    pause
 )
+
+:: Pause and wait for user to press any key
+pause

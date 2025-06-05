@@ -1,32 +1,26 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Set color output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-# No Color
-NC='\033[0m'
+# Read user input
+read -rp "Enter input file or directory name: " INPUT_FILE
+read -rp "Enter output file name: " OUTPUT_FILE
 
-# Get user input for input and output files
-read -p "Enter input file name: " INPUT_FILE
-read -p "Enter output file name: " OUTPUT_FILE
-
-# Set default parameters
-MODE="compress"
+# Default parameters
+MODE="merge"
 FPS=32
-RESOLUTION="1080p"
+RESOLUTION=""
 BITRATE=0
 PRESET="p3"
 CQ=32
-# If width and height are set, resolution will be ignored (0 is auto)
-WIDTH=0
+WIDTH=0      # If width and height are set (>0), resolution will be ignored
 HEIGHT=0
 ENCODER="gpu"
 # mp4, mkv, avi, flv, webm, mov, wmv, ts
-OUTPUT_EXTENSION="ts"
+OUTPUT_EXTENSION="mov"
 
-# Display current parameters
+# Show current parameters
 echo ================================================
-echo -e "${GREEN}Current parameters:${NC}"
+echo "Current parameters:"
 echo "Input file: $INPUT_FILE"
 echo "Output file: $OUTPUT_FILE"
 echo "Mode: $MODE"
@@ -41,18 +35,17 @@ echo "Encoder: $ENCODER"
 echo "Output extension: $OUTPUT_EXTENSION"
 echo ================================================
 
-# Check if input file exists
-if [ ! -f "$INPUT_FILE" ]; then
-    echo -e "${RED}Error: Input file $INPUT_FILE not found${NC}"
-    exit 1
+# Check if input file or directory exists
+if [[ ! -e "$INPUT_FILE" ]]; then
+  echo "Error: Input '$INPUT_FILE' not found."
+  exit 1
 fi
 
 # Create output directory
 OUTPUT_DIR=$(dirname "$OUTPUT_FILE")
-if [ ! -d "$OUTPUT_DIR" ]; then
-    mkdir -p "$OUTPUT_DIR"
-fi
+mkdir -p "$OUTPUT_DIR"
 
+# Run Go program
 if ./video_compressor \
   -input      "$INPUT_FILE" \
   -output     "$OUTPUT_FILE" \
@@ -67,8 +60,11 @@ if ./video_compressor \
   -encoder    "$ENCODER" \
   -output-extension  "$OUTPUT_EXTENSION"
 then
-    echo -e "${GREEN}Video compression completed!${NC}"
+  echo "Video compression completed!"
 else
-    echo -e "${RED}Video compression failed!${NC}"
-    exit 1
+  echo "Video compression failed!"
 fi
+
+# Wait for user to press any key before exiting
+read -n1 -r -p "Press any key to continue..." _
+echo

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"video_compressor/src/config"
+	"video_compressor/src/ffmpeg"
 	"video_compressor/src/utils"
 	"video_compressor/src/video"
 )
@@ -27,12 +28,34 @@ func main() {
 	width := flag.Int("width", 0, "Custom width (0 for default)")
 	height := flag.Int("height", 0, "Custom height (0 for default)")
 	encoder := flag.String("encoder", "gpu", "Encoder type (options: gpu, cpu)")
+	outputExtension := flag.String("output-extension", ".mp4", "Output file extension (default: .mp4)")
 
 	flag.Parse()
+
+	// check ffmpeg
+	ffmpegPath, err := ffmpeg.CheckFFmpeg()
+	if err != nil {
+		fmt.Println("FFmpeg not found, attempting to download...")
+		if err := ffmpeg.DownloadFFmpeg(); err != nil {
+			fmt.Println("Error: Failed to download FFmpeg:", err)
+			return
+		}
+		ffmpegPath, err = ffmpeg.CheckFFmpeg()
+		if err != nil {
+			fmt.Println("Error: FFmpeg still not found after download:", err)
+			return
+		}
+	}
 
 	// Trim whitespace from input and output paths
 	*inputPath = strings.TrimSpace(*inputPath)
 	*outputPath = strings.TrimSpace(*outputPath)
+
+	// Ensure that an input path was provided
+	if *inputPath == "" {
+		fmt.Fprintln(os.Stderr, "Error: --input flag is required")
+		os.Exit(1)
+	}
 
 	// Check if input file exists
 	if _, err := os.Stat(*inputPath); os.IsNotExist(err) {
@@ -40,9 +63,21 @@ func main() {
 		return
 	}
 
-	// If output path is not specified, use input file name
+	// filepath.Base returns the last element of the path
+	base := filepath.Base(*inputPath)
+	// filepath.Ext returns the file extension (e.g. ".mov")
+	ext := filepath.Ext(base)
+	// Remove the original extension
+	name := strings.TrimSuffix(base, ext)
+
+	fmt.Println("Name:", name)
+	fmt.Println("Ext:", ext)
+	fmt.Println("Output extension:", *outputExtension)
+
+	// If no output path specified, derive from input file's base name and add .mp4
 	if *outputPath == "" {
-		*outputPath = filepath.Base(*inputPath)
+		// Append the new .mp4 extension
+		*outputPath = fmt.Sprintf("%s.%s", name, strings.TrimPrefix(*outputExtension, "."))
 	}
 
 	// Create output directory if it doesn't exist
@@ -61,14 +96,16 @@ func main() {
 		return
 	}
 	videoConfig := config.VideoConfig{
-		Fps:        *fps,
-		Resolution: resolutionStr,
-		Bitrate:    *bitrate,
-		Preset:     *preset,
-		Cq:         *cq,
-		Width:      *width,
-		Height:     *height,
-		Encoder:    *encoder,
+		FfmpegPath:      ffmpegPath,
+		Fps:             *fps,
+		Resolution:      resolutionStr,
+		Bitrate:         *bitrate,
+		Preset:          *preset,
+		Cq:              *cq,
+		Width:           *width,
+		Height:          *height,
+		Encoder:         *encoder,
+		OutputExtension: *outputExtension,
 	}
 
 	// If custom width/height is specified, clear resolution to prevent override

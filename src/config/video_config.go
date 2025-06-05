@@ -66,12 +66,14 @@ func StringToResolution(s interface{}) (Resolution, error) {
 
 // VideoConfig holds all video compression parameters
 type VideoConfig struct {
-	Fps        int
-	Resolution Resolution
-	Bitrate    int
-	Preset     string
-	Cq         int
-	Width      int    // Target width (0 means auto). If set, Resolution will be ignored
-	Height     int    // Target height (0 means auto). If set, Resolution will be ignored
-	Encoder    string // "gpu" for NVIDIA HEVC or "cpu" for libx265
+	FfmpegPath      string
+	Fps             int
+	Resolution      Resolution
+	Bitrate         int
+	Preset          string
+	Cq              int
+	Width           int    // Target width (0 means auto). If set, Resolution will be ignored
+	Height          int    // Target height (0 means auto). If set, Resolution will be ignored
+	Encoder         string // "gpu" for NVIDIA HEVC or "cpu" for libx265
+	OutputExtension string // ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv"
 }

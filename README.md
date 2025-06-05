@@ -1,121 +1,147 @@
-# Video Compressor
+# 🎬 Video Compressor
 
-A powerful video compression tool that supports both GPU (NVIDIA) and CPU encoding, significantly reducing video file sizes while maintaining good quality. The tool also includes batch processing and video merging capabilities.
+> High-performance video compression tool with GPU/CPU encoding support, dramatically reducing file sizes while maintaining excellent quality
 
-## Installation
+## ✨ Key Features
 
-### Option 1: Direct Download (Recommended)
-1. Download the latest release from [GitHub Releases](https://github.com/911218sky/video_compressor/releases)
-2. Extract all files to your desired location. Make sure you have these files in the same directory:
-   - `video_compressor.exe` (Main program executable)
-   - `run.bat` (Single video compression script)
-   - `run_merge.bat` (Video merging script)
-   - `build.sh` (Optional, only needed for source compilation)
-   - `run.sh` (Optional, for Linux/macOS users only)
-3. Done! You can now use the tool directly by running either `run.bat` or `run_merge.bat`
+- 🚀 **GPU Acceleration** - NVIDIA hardware encoding for lightning-fast processing
+- 📁 **Batch Processing** - Process entire directories of videos at once
+- 🎯 **Smart Compression** - Auto-optimized settings for best quality
+- 🎨 **Color Output** - Clear success/error message display
+- 🔄 **Video Merging** - Combine multiple videos into a single file
 
-### Option 2: Build from Source
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/video_compressor.git
-cd video_compressor
-```
+---
 
-2. Build the project:
-```bash
-# On Linux/macOS
-./build.sh
-```
+## 🚀 Quick Start
 
-## Usage
+### Windows Users
 
-### Basic Usage (Single Video Compression)
+1. **Download** → [GitHub Releases](https://github.com/911218sky/video_compressor/releases)
+2. **Extract** → Ensure these files are in the same folder:
+   ```
+   📁 video_compressor/
+   ├── 🔧 video_compressor.exe
+   ├── 📝 run.bat
+   └── 📝 run_merge.bat
+   ```
+3. **Run** → Double-click `run.bat` to start
 
-Simply double-click `run.bat` or run it from command line:
+### Linux/macOS Users
 
 ```bash
-run.bat
+# Set permissions
+chmod +x video_compressor run.sh run_merge.sh
+
+# Start using
+./run.sh
 ```
 
-The script will prompt you for:
-- Input video file name
-- Output video file name
+---
 
-Default compression settings:
-- Resolution: 1080p
-- Frame rate: 32 fps
-- Preset: p3 (balanced speed/quality)
-- Quality value: 32
-- GPU encoding (automatically falls back to CPU if GPU is unavailable)
+## 💡 Usage
 
-### Video Merging and Batch Processing
+### 🎯 Single Video Compression
 
-The tool supports merging multiple videos from a directory. Use `run_merge.bat` (Windows) for this functionality:
+| Platform | Command |
+|----------|---------|
+| Windows | `run.bat` |
+| Linux/macOS | `./run.sh` |
 
-1. Run the merge script:
-```bash
-run_merge.bat
-```
+**Process:**
+1. Enter input video filename
+2. Enter output filename  
+3. Wait for compression to complete ✅
 
-2. When prompted:
-   - Enter the input directory containing your videos
-   - Enter the desired output filename
+### 📁 Batch Merging
 
-Default merge parameters:
-- Frame rate: 32 fps
-- Preset: p3 (balanced speed/quality)
-- Quality value: 32
-- Encoder: GPU (with automatic fallback to CPU)
+| Platform | Command |
+|----------|---------|
+| Windows | `run_merge.bat` |
+| Linux/macOS | `./run_merge.sh` |
 
-### Advanced Usage
+**Process:**
+1. Enter directory path containing videos
+2. Enter merged output filename
+3. Wait for processing to complete ✅
 
-```bash
-# Single video compression with custom parameters
-./video_compressor -input input.mp4 -output output.mp4 -fps 30 -resolution 720p -bitrate 2500 -preset p7 -cq 32
+---
 
-# Video merging with custom parameters
-./video_compressor -input "input_directory" -output "output.mp4" -mode merge -fps 30 -preset p4 -cq 28 -encoder gpu
-```
+## ⚙️ Command-Line Parameters
 
-### Parameters
+### 🎛️ Essential Parameters
 
-#### Common Parameters
-- `-input`: Input video file or directory path
-- `-output`: Output video file path
-- `-fps`: Frame rate (default: 32)
-- `-resolution`: Video resolution (1080p, 720p, 480p)
-- `-bitrate`: Custom bitrate in Kbps (0 for default)
-- `-preset`: Encoder preset (p1=fastest, p7=best quality)
-- `-cq`: Constant quality value (0-51, lower is better)
-- `-width`: Custom width (0 for default)
-- `-height`: Custom height (0 for default)
-- `-encoder`: Encoding device (gpu/cpu)
+| Parameter | Description | Default | Options/Examples |
+|-----------|-------------|---------|------------------|
+| `-input` | Input video file/directory path | **Required** | `video.mp4`, `./videos/` |
+| `-output` | Output video file path | Auto-generated | `output.mp4` |
+| `-mode` | Operation mode | `compress` | `compress`, `merge` |
 
-#### Merge-specific Parameters
-- `-mode`: Operation mode (merge for combining videos)
+### 📹 Video Settings
 
-## Supported Video Formats
+| Parameter | Description | Default | Options/Examples |
+|-----------|-------------|---------|------------------|
+| `-fps` | Frame rate | `32` | `24`, `30`, `60` |
+| `-resolution` | Video resolution | Auto (1080p) | `1080p`, `720p`, `480p` |
+| `-width` | Custom width (overrides resolution) | `0` (auto) | `1920`, `1280` |
+| `-height` | Custom height (overrides resolution) | `0` (auto) | `1080`, `720` |
 
-### Input Formats
-- MP4 (H.264/AVC, H.265/HEVC)
-- AVI
-- MKV
-- MOV
-- WMV
-- FLV
+### 🎚️ Quality Settings
 
-### Output Format
-- MP4 (H.265/HEVC)
+| Parameter | Description | Default | Range/Options |
+|-----------|-------------|---------|---------------|
+| `-preset` | Encoder preset | `p7` | `p1` (fastest) ~ `p7` (best quality) |
+| `-cq` | Constant quality value | `32` | `0` (best) ~ `51` (worst) |
+| `-bitrate` | Custom bitrate in Kbps | `0` (auto) | `2000`, `5000`, `10000` |
 
-## Performance Tips
+### 🔧 Technical Settings
 
-1. Use GPU encoding when available for best performance
-2. Choose appropriate presets based on your needs:
-   - p1-p3: Fast encoding, larger file size
-   - p4-p5: Balanced
-   - p6-p7: Best quality, slower encoding
-3. For batch processing or merging:
-   - Organize input videos in a dedicated directory
-   - Ensure sufficient disk space for temporary files
-   - Consider using lower quality presets for large batches
-   - Videos will be processed in alphabetical order
+| Parameter | Description | Default | Options |
+|-----------|-------------|---------|---------|
+| `-encoder` | Encoding device | `gpu` | `gpu`, `cpu` |
+| `-output-extension` | Output file format | `.mp4` | `.mp4`, `.avi`, `.mkv`, `.mov`, `.wmv`, `.flv`, `.webm`, `.ts` |
+
+### 🏃‍♂️ Speed vs Quality
+
+| Use Case | Recommended Settings |
+|----------|---------------------|
+| **Speed Priority** | `preset p1` + `cq 35` |
+| **Balanced** | `preset p3` + `cq 32` |
+| **Quality Priority** | `preset p7` + `cq 20` |
+
+### 💾 File Size Optimization
+
+| File Size Target | CQ Value | Notes |
+|------------------|----------|-------|
+| **Small files** | `30-35` | Good for sharing |
+| **Medium files** | `25-30` | Balanced quality |
+| **Large files** | `18-25` | High quality |
+
+---
+
+### 📥 Input Formats
+`MP4` `AVI` `MKV` `MOV` `WMV` `FLV` `TS` `WEBM`
+
+### 📤 Output Formats  
+| Format | Extension | Best For |
+|--------|-----------|----------|
+| **MP4** | `.mp4` | General use, compatibility |
+| **MKV** | `.mkv` | High quality, multiple tracks |
+| **AVI** | `.avi` | Legacy compatibility |
+| **MOV** | `.mov` | Apple ecosystem |
+| **WEBM** | `.webm` | Web streaming |
+| **TS** | `.ts` | Broadcasting, streaming |
+| **WMV** | `.wmv` | Windows compatibility |
+| **FLV** | `.flv` | Flash video (legacy) |
+
+---
+
+## 🔧 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| GPU encoding fails | Automatically switches to CPU |
+| Input file not found | Check file path and permissions |
+| FFmpeg missing | Tool auto-downloads FFmpeg |
+
+
+**🚀 Start compressing! Enjoy efficient, high-quality video processing**

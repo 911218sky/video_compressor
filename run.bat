@@ -1,55 +1,83 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal EnableDelayedExpansion
 
-:: Get user input for input and output files
-set /p INPUT_FILE="Enter input file name: "
-set /p OUTPUT_FILE="Enter output file name: "
+REM Set color output
+REM Define ESC (escape) character
+for /F "delims=" %%A in ('echo prompt $E ^| cmd') do set "ESC=%%A"
+set "GREEN=!ESC![0;32m"
+set "RED=!ESC![0;31m"
+REM No Color
+set "NC=!ESC![0m"
 
-:: Set default parameters
-set MODE=compress
-set FPS=32
-set RESOLUTION=1080p
-set BITRATE=0
-set PRESET=p3
-set CQ=32
-:: If width and height are set, resolution will be ignored (0 is auto)
-set WIDTH=1080
-set HEIGHT=2880
-set ENCODER=gpu
+REM Get user input for input and output files
+set /p INPUT_FILE=Enter input file name: 
+set /p OUTPUT_FILE=Enter output file name: 
 
-:: Display current parameters
+REM Set default parameters
+set "MODE=compress"
+set "FPS=32"
+set "RESOLUTION=1080p"
+set "BITRATE=0"
+set "PRESET=p3"
+set "CQ=32"
+REM If width and height are set, resolution will be ignored (0 is auto)
+set "WIDTH=0"
+set "HEIGHT=0"
+set "ENCODER=gpu"
+REM mp4, mkv, avi, flv, webm, mov, wmv, ts
+set "OUTPUT_EXTENSION=ts"
+
+REM Display current parameters
 echo ================================================
-echo Current parameters:
-echo Input file: %INPUT_FILE%
-echo Output file: %OUTPUT_FILE%
-echo Mode: %MODE%
-echo Frame rate: %FPS%
-echo Resolution: %RESOLUTION%
-echo Bitrate: %BITRATE%
-echo Preset: %PRESET%
-echo Quality value: %CQ%
-echo Width: %WIDTH%
-echo Height: %HEIGHT%
-echo Encoder: %ENCODER%
+echo(!GREEN!Current parameters:!NC!
+echo Input file:         %INPUT_FILE%
+echo Output file:        %OUTPUT_FILE%
+echo Mode:               %MODE%
+echo Frame rate:         %FPS%
+echo Resolution:         %RESOLUTION%
+echo Bitrate:            %BITRATE%
+echo Preset:             %PRESET%
+echo Quality value (CQ): %CQ%
+echo Width:              %WIDTH%
+echo Height:             %HEIGHT%
+echo Encoder:            %ENCODER%
+echo Output extension:   %OUTPUT_EXTENSION%
 echo ================================================
 
-:: Check if input file exists
+REM Check if input file exists
 if not exist "%INPUT_FILE%" (
-    echo Error: Input file %INPUT_FILE% not found
+    echo(!RED!Error: Input file %INPUT_FILE% not found!%NC%
+    pause
     exit /b 1
 )
 
-:: Create output directory
+REM Create output directory
 for %%I in ("%OUTPUT_FILE%") do set "OUTPUT_DIR=%%~dpI"
-if not exist "%OUTPUT_DIR%" mkdir "%OUTPUT_DIR%"
-
-:: Run video compression
-video_compressor.exe -input "%INPUT_FILE%" -output "%OUTPUT_FILE%" -mode %MODE% -fps %FPS% -resolution %RESOLUTION% -bitrate %BITRATE% -preset %PRESET% -cq %CQ% -width %WIDTH% -height %HEIGHT% -encoder %ENCODER%
-
-if %ERRORLEVEL% equ 0 (
-    echo Video compression completed!
-    pause
-) else (
-    echo Video compression failed!
-    pause
+if not exist "%OUTPUT_DIR%" (
+    mkdir "%OUTPUT_DIR%"
 )
+
+REM Run video compressor
+video_compressor.exe ^
+    -input "%INPUT_FILE%" ^
+    -output "%OUTPUT_FILE%" ^
+    -mode "%MODE%" ^
+    -fps %FPS% ^
+    -resolution "%RESOLUTION%" ^
+    -bitrate %BITRATE% ^
+    -preset "%PRESET%" ^
+    -cq %CQ% ^
+    -width %WIDTH% ^
+    -height %HEIGHT% ^
+    -encoder "%ENCODER%" ^
+    -output-extension "%OUTPUT_EXTENSION%"
+
+REM Check exit status and display result
+if %ERRORLEVEL% equ 0 (
+    echo(!GREEN!Video compression completed!%NC%
+) else (
+    echo(!RED!Video compression failed!%NC%
+)
+
+REM Wait for user to press any key before exiting
+pause

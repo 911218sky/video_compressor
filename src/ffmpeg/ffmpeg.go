@@ -9,23 +9,119 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
+
+	"video_compressor/src/config"
 )
 
 // Supported video formats
-var supportedFormats = map[string]bool{
+var SupportedFormats = map[string]bool{
+	".mp4":  true,
+	".avi":  true,
+	".mkv":  true,
+	".mov":  true,
+	".wmv":  true,
+	".flv":  true,
+	".webm": true,
+	".ts":   true,
+}
+
+// gpuSupportedExt lists container formats that work with NVIDIA HEVC GPU encoder.
+var GpuSupportedExt = map[string]bool{
 	".mp4": true,
-	".avi": true,
-	".mkv": true,
 	".mov": true,
-	".wmv": true,
-	".flv": true,
+	".mkv": true,
+	".ts":  true,
+}
+
+// SupportedFormatsKeys returns a slice of the keys of a map
+func SupportedFormatsKeys() []string {
+	k := make([]string, 0, len(SupportedFormats))
+	for x := range SupportedFormats {
+		k = append(k, x)
+	}
+	return k
+}
+
+// DetermineCodec returns the codec-related FFmpeg args based on output extension.
+func DetermineCodec(ext string, cfg config.VideoConfig) []string {
+	// If GPU is requested but the container does not support HEVC_NVENC, fall back to CPU HEVC
+	if cfg.Encoder == "gpu" && !GpuSupportedExt[ext] {
+		fmt.Printf(
+			"Warning: GPU encoding (hevc_nvenc) is not supported for %s, falling back to CPU libx265.\n",
+			ext,
+		)
+		cfg.Encoder = "cpu"
+	}
+
+	if cfg.Encoder == "gpu" {
+		// hevc_nvenc: supports -rc, -cq, -b:v, -maxrate, -bufsize
+		return []string{
+			"-c:v", "hevc_nvenc",
+			"-rc", "vbr",
+			"-cq", strconv.Itoa(cfg.Cq),
+			"-b:v", fmt.Sprintf("%dk", cfg.Bitrate),
+			"-maxrate", fmt.Sprintf("%dk", cfg.Bitrate),
+			"-bufsize", fmt.Sprintf("%dk", cfg.Bitrate*2),
+		}
+	}
+
+	switch ext {
+	case ".mp4", ".mov", ".avi", ".flv", ".ts":
+		// libx264: supports -preset, -crf, -b:v, -maxrate, -bufsize
+		return []string{
+			"-c:v", "libx264",
+			"-preset", cfg.Preset,
+			"-crf", strconv.Itoa(cfg.Cq),
+			"-b:v", fmt.Sprintf("%dk", cfg.Bitrate),
+			"-maxrate", fmt.Sprintf("%dk", cfg.Bitrate),
+			"-bufsize", fmt.Sprintf("%dk", cfg.Bitrate*2),
+		}
+
+	case ".mkv":
+		// libx265: supports -preset, -crf, -b:v, -maxrate, -bufsize
+		return []string{
+			"-c:v", "libx265",
+			"-preset", cfg.Preset,
+			"-crf", strconv.Itoa(cfg.Cq),
+			"-b:v", fmt.Sprintf("%dk", cfg.Bitrate),
+			"-maxrate", fmt.Sprintf("%dk", cfg.Bitrate),
+			"-bufsize", fmt.Sprintf("%dk", cfg.Bitrate*2),
+		}
+
+	case ".webm":
+		// libvpx-vp9: supports -b:v, -crf
+		return []string{
+			"-c:v", "libvpx-vp9",
+			"-crf", strconv.Itoa(cfg.Cq),
+			"-b:v", fmt.Sprintf("%dk", cfg.Bitrate),
+		}
+
+	case ".wmv":
+		// wmv2: supports -b:v
+		return []string{
+			"-c:v", "wmv2",
+			"-b:v", fmt.Sprintf("%dk", cfg.Bitrate),
+		}
+
+	default:
+		// fallback to libx264
+		return []string{
+			"-c:v", "libx264",
+			"-preset", cfg.Preset,
+			"-crf", strconv.Itoa(cfg.Cq),
+			"-b:v", fmt.Sprintf("%dk", cfg.Bitrate),
+			"-maxrate", fmt.Sprintf("%dk", cfg.Bitrate),
+			"-bufsize", fmt.Sprintf("%dk", cfg.Bitrate*2),
+		}
+	}
 }
 
 // IsSupportedFormat checks if the given file format is supported
 func IsSupportedFormat(filename string) bool {
 	ext := strings.ToLower(filepath.Ext(filename))
-	return supportedFormats[ext]
+	return SupportedFormats[ext]
 }
 
 // CheckFFmpeg checks if ffmpeg is available in PATH or current directory

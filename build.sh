@@ -7,7 +7,6 @@ NC='\033[0m' # No Color
 # Default settings
 USE_UPX=true
 UPX_LEVEL=6
-KEEP_UNCOMPRESSED=true
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -19,13 +18,6 @@ while [[ $# -gt 0 ]]; do
         --upx-level)
             UPX_LEVEL=$2
             shift 2
-            ;;
-        --keep-uncompressed)
-            KEEP_UNCOMPRESSED=true
-            shift
-            ;;
-        *)
-            shift
             ;;
     esac
 done

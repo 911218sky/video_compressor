@@ -15,275 +15,219 @@ import (
 )
 
 // CompressVideo compresses the video using ffmpeg
-func CompressVideo(inputPath, outputPath string, videoConfig config.VideoConfig, print bool) error {
-	// Check for ffmpeg
-	ffmpegPath, err := ffmpeg.CheckFFmpeg()
-	if err != nil {
-		fmt.Println("FFmpeg not found, attempting to download...")
-		if err := ffmpeg.DownloadFFmpeg(); err != nil {
-			return fmt.Errorf("failed to download FFmpeg: %v", err)
-		}
-		ffmpegPath, err = ffmpeg.CheckFFmpeg()
-		if err != nil {
-			return fmt.Errorf("FFmpeg still not found after download: %v", err)
-		}
-	}
-
-	// Check if input file format is supported
+func CompressVideo(inputPath, outputPath string, cfg config.VideoConfig, verbose bool) error {
+	// Validate input format
 	if !ffmpeg.IsSupportedFormat(inputPath) {
-		return fmt.Errorf("unsupported input file format. Supported formats: MP4, AVI, MKV, MOV, WMV, FLV")
+		return fmt.Errorf(
+			"unsupported input format; supported: MP4, AVI, MKV, MOV, WMV, FLV, WEBM",
+		)
 	}
 
-	// Check if output path has valid extension
-	if !strings.HasSuffix(strings.ToLower(outputPath), ".mp4") {
-		return fmt.Errorf("output file must have .mp4 extension")
+	// Handle output file extension
+	ext := strings.ToLower(cfg.OutputExtension)
+	if !strings.HasPrefix(ext, ".") {
+		ext = "." + ext
+	}
+	if !ffmpeg.SupportedFormats[ext] {
+		return fmt.Errorf(
+			"unsupported output extension %q; supported: %v",
+			ext, ffmpeg.SupportedFormatsKeys(),
+		)
+	}
+	if filepath.Ext(outputPath) != ext {
+		outputPath += ext
 	}
 
-	oldSize, err := utils.GetVideoSize(inputPath)
+	// Get original file size
+	origSize, err := utils.GetVideoSize(inputPath)
 	if err != nil {
-		return fmt.Errorf("error getting input file size: %v", err)
+		return fmt.Errorf("failed to get input file size: %v", err)
 	}
 
-	// If resolution is specified, override width, height and bitrate
-	if videoConfig.Resolution != config.ResolutionNone && videoConfig.Width == 0 && videoConfig.Height == 0 {
-		// Get original video dimensions
-		fmt.Println("Getting video dimensions...")
-		originalWidth, originalHeight, err := utils.GetVideoDimensions(inputPath)
-		if err != nil {
-			fmt.Printf("Warning: Could not get video dimensions: %v\n", err)
-			originalWidth, originalHeight = 0, 0
+	// Auto-calculate width and height if needed
+	if cfg.Resolution != config.ResolutionNone && cfg.Width == 0 && cfg.Height == 0 {
+		ow, oh, e := utils.GetVideoDimensions(inputPath)
+		if e != nil {
+			fmt.Printf("Warning: cannot get dimensions: %v\n", e)
 		}
-		videoConfig.Width, videoConfig.Height, videoConfig.Bitrate = utils.GetRecommendedSettings(videoConfig.Resolution, originalWidth, originalHeight)
+		w, h, br := utils.GetRecommendedSettings(cfg.Resolution, ow, oh)
+		cfg.Width, cfg.Height, cfg.Bitrate = w, h, br
 	}
 
-	var cmd *exec.Cmd
-	if videoConfig.Encoder == "gpu" {
-		// Try GPU encoder first if specified
-		args := []string{
-			"-i", inputPath,
-			"-c:v", "hevc_nvenc", // Use NVIDIA GPU HEVC encoder
-			"-preset", videoConfig.Preset,
-			"-rc", "vbr", // Variable bitrate
-			"-cq", strconv.Itoa(videoConfig.Cq),
-			"-b:v", fmt.Sprintf("%dk", videoConfig.Bitrate),
-			"-maxrate", fmt.Sprintf("%dk", videoConfig.Bitrate),
-			"-bufsize", fmt.Sprintf("%dk", videoConfig.Bitrate*2),
-			"-r", strconv.Itoa(videoConfig.Fps),
-			"-vf", fmt.Sprintf("scale=%d:%d", videoConfig.Width, videoConfig.Height),
-			outputPath,
-			"-y",
-		}
-
-		cmd = exec.Command(ffmpegPath, args...)
-	} else {
-		// Use CPU encoder
-		args := []string{
-			"-i", inputPath,
-			"-c:v", "libx265", // Use CPU HEVC encoder
-			"-preset", videoConfig.Preset,
-			"-crf", strconv.Itoa(videoConfig.Cq),
-			"-b:v", fmt.Sprintf("%dk", videoConfig.Bitrate),
-			"-maxrate", fmt.Sprintf("%dk", videoConfig.Bitrate),
-			"-bufsize", fmt.Sprintf("%dk", videoConfig.Bitrate*2),
-			"-r", strconv.Itoa(videoConfig.Fps),
-			"-vf", fmt.Sprintf("scale=%d:%d", videoConfig.Width, videoConfig.Height),
-			outputPath,
-			"-y",
-		}
-		cmd = exec.Command(ffmpegPath, args...)
+	// Build ffmpeg arguments
+	// Set input file
+	args := []string{"-i", inputPath}
+	// Determine codec and bitrate
+	args = append(args, ffmpeg.DetermineCodec(ext, cfg)...)
+	// Set fps
+	args = append(args, "-r", strconv.Itoa(cfg.Fps))
+	// Scale if width and height are set
+	if cfg.Width > 0 && cfg.Height > 0 {
+		args = append(args, "-vf", fmt.Sprintf("scale=%d:%d", cfg.Width, cfg.Height))
 	}
+	// Set container
+	// Get the muxer name by removing the leading dot from the extension (e.g., ".mkv" becomes "mkv")
+	muxer := strings.TrimPrefix(ext, ".")
+	switch muxer {
+	case "mkv":
+		muxer = "matroska"
+	case "ts":
+		muxer = "mpegts"
+	case "wmv":
+		muxer = "asf"
+	}
+	args = append(args, "-f", muxer)
+	// Overwrite output file
+	args = append(args, outputPath, "-y")
 
-	if print {
-		// Create pipes for real-time output
-		cmd.Stderr = os.Stderr
+	// Run FFmpeg
+	cmd := exec.Command(cfg.FfmpegPath, args...)
+	if verbose {
 		cmd.Stdout = os.Stdout
-		fmt.Println("Command:", cmd.String())
-		fmt.Printf("Starting video compression with %s encoder...\n",
-			map[string]string{"gpu": "NVIDIA GPU", "cpu": "CPU"}[videoConfig.Encoder])
-		if videoConfig.Width > 0 && videoConfig.Height > 0 {
-			fmt.Printf("Output resolution: %dx%d\n", videoConfig.Width, videoConfig.Height)
+		cmd.Stderr = os.Stderr
+		fmt.Println("FFmpeg command:", cmd.String())
+	}
+	if err := cmd.Run(); err != nil {
+		// Show warning if GPU encoding fails
+		if cfg.Encoder == "gpu" && strings.Contains(err.Error(), "hevc_nvenc") {
+			fmt.Println("Warning: NVIDIA GPU encoding failed. Please retry with CPU encoder.")
+			return fmt.Errorf("gpu encoder error: %v", err)
 		}
+		return fmt.Errorf("ffmpeg execution error: %v", err)
 	}
 
-	// Run the command
-	err = cmd.Run()
-	if err != nil {
-		// If GPU encoder was selected but failed, offer to try CPU encoder
-		if videoConfig.Encoder == "gpu" && strings.Contains(err.Error(), "hevc_nvenc") {
-			fmt.Println("\nNVIDIA GPU encoder failed. Please try using the CPU encoder instead.")
-			return fmt.Errorf("GPU encoder error: %v", err)
-		}
-		return fmt.Errorf("ffmpeg error: %v", err)
-	}
-
-	// Get new size and print statistics
+	// Show statistics
 	newSize, err := utils.GetVideoSize(outputPath)
 	if err != nil {
-		return fmt.Errorf("error getting output file size: %v", err)
+		return fmt.Errorf("failed to get output file size: %v", err)
 	}
-
-	if print {
-		fmt.Println("Compression complete!")
-		fmt.Printf("Original size: %.2fMB\n", float64(oldSize)/1024/1024)
-		fmt.Printf("Compressed size: %.2fMB\n", float64(newSize)/1024/1024)
-		fmt.Printf("Reduced by %.2f%%\n", (1-float64(newSize)/float64(oldSize))*100)
+	if verbose {
+		fmt.Println("Compression completed!")
+		fmt.Printf(
+			"Original: %.2fMB, Compressed: %.2fMB, Reduction: %.2f%%\n",
+			float64(origSize)/1024/1024,
+			float64(newSize)/1024/1024,
+			(1-float64(newSize)/float64(origSize))*100,
+		)
 	}
-
 	return nil
 }
 
 // MergeVideos reencodes and merges all .ts and .mp4 files in the given directory
-func MergeVideos(inputDir, outputPath string, videoConfig config.VideoConfig) error {
-	// Check if output path has valid extension
-	if !strings.HasSuffix(strings.ToLower(outputPath), ".mp4") {
-		return fmt.Errorf("output file must have .mp4 extension")
+func MergeVideos(inputDir, outputPath string, cfg config.VideoConfig) error {
+	// Handle and validate output file extension
+	ext := strings.ToLower(cfg.OutputExtension)
+	if !strings.HasPrefix(ext, ".") {
+		ext = "." + ext
+	}
+	if !ffmpeg.SupportedFormats[ext] {
+		return fmt.Errorf("unsupported output extension %q; supported: %v", ext, ffmpeg.SupportedFormatsKeys())
+	}
+	if filepath.Ext(outputPath) != ext {
+		outputPath += ext
 	}
 
-	// get the min ratio
+	// Analyze minimum width/height ratio
 	ratio, err := utils.AnalyzeVideoRatios(inputDir, "min")
 	if err != nil {
 		return fmt.Errorf("failed to analyze video dimensions: %v", err)
 	}
-
-	// Check if video is portrait (ratio < 1) or landscape (ratio > 1)
-	if videoConfig.Resolution != config.ResolutionNone {
-		videoConfig.Width, videoConfig.Height = utils.GetResolutionDimensionsRatio(videoConfig.Resolution, ratio)
+	if cfg.Resolution != config.ResolutionNone {
+		cfg.Width, cfg.Height = utils.GetResolutionDimensionsRatio(cfg.Resolution, ratio)
 	} else {
-		fmt.Println("No resolution specified, using 1080p")
-		videoConfig.Width, videoConfig.Height = utils.GetResolutionDimensionsRatio(config.Resolution1080p, ratio)
+		fmt.Println("No resolution specified, defaulting to 1080p")
+		cfg.Width, cfg.Height = utils.GetResolutionDimensionsRatio(config.Resolution1080p, ratio)
 	}
+	fmt.Printf("Using resolution: %dx%d (ratio %.3f)\n", cfg.Width, cfg.Height, ratio)
 
-	fmt.Printf("Ratio: %f\n", ratio)
-	fmt.Printf("Using resolution: %dx%d\n", videoConfig.Width, videoConfig.Height)
-
-	// Create temporary directory for reencoded files
+	// Create temporary directory
 	tempDir, err := os.MkdirTemp("", "video_merge_*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir) // Clean up temp directory when done
+	defer os.RemoveAll(tempDir)
 
-	// Get all .ts and .mp4 files
-	files, err := os.ReadDir(inputDir)
+	// Search for all supported formats and .ts input files
+	entries, err := os.ReadDir(inputDir)
 	if err != nil {
 		return fmt.Errorf("failed to read directory: %v", err)
 	}
-
-	var videoFiles []string
-	for _, file := range files {
-		if file.IsDir() {
+	var files []string
+	for _, e := range entries {
+		if e.IsDir() {
 			continue
 		}
-		name := strings.ToLower(file.Name())
-		if strings.HasSuffix(name, ".ts") || strings.HasSuffix(name, ".mp4") {
-			videoFiles = append(videoFiles, file.Name())
+		name := e.Name()
+		l := strings.ToLower(name)
+		extIn := filepath.Ext(l)
+		if ffmpeg.SupportedFormats[extIn] {
+			files = append(files, name)
 		}
 	}
-
-	if len(videoFiles) == 0 {
-		return fmt.Errorf("no .ts or .mp4 files found in directory")
+	if len(files) == 0 {
+		return fmt.Errorf("no video files (%v supported containers) found in %s", ffmpeg.SupportedFormatsKeys(), inputDir)
 	}
 
-	// Sort files to ensure consistent order
-	sort.Slice(videoFiles, func(i, j int) bool {
-		// Extract numbers from the beginning of filenames
-		numI := 0
-		numJ := 0
-		fmt.Sscanf(videoFiles[i], "%d", &numI)
-		fmt.Sscanf(videoFiles[j], "%d", &numJ)
-
-		// If both files start with numbers, compare numerically
-		if numI > 0 && numJ > 0 {
-			return numI < numJ
+	// Sort files
+	sort.Slice(files, func(i, j int) bool {
+		var ni, nj int
+		fmt.Sscanf(files[i], "%d", &ni)
+		fmt.Sscanf(files[j], "%d", &nj)
+		if ni > 0 && nj > 0 {
+			return ni < nj
 		}
-
-		// If only one file starts with a number, put it first
-		if numI > 0 {
+		if ni > 0 {
 			return true
 		}
-		if numJ > 0 {
+		if nj > 0 {
 			return false
 		}
-
-		// If neither file starts with a number, compare alphabetically
-		return strings.Compare(videoFiles[i], videoFiles[j]) < 0
+		return files[i] < files[j]
 	})
 
-	// Create a file list for ffmpeg
+	// Re-encode and generate list
 	listFile := filepath.Join(tempDir, "files.txt")
-	var listContent strings.Builder
-
-	// Reencode each video file
-	fmt.Println("Step 1: Reencoding individual files...")
-	for i, fileName := range videoFiles {
-		inputPath := filepath.Join(inputDir, fileName)
-		tempOutput := filepath.Join(tempDir, fmt.Sprintf("reencoded_%d.mp4", i))
-
-		fmt.Printf("Reencoding file %d/%d (%.1f%%): %s\n", i+1, len(videoFiles), float64(i+1)/float64(len(videoFiles))*100, fileName)
-		err := CompressVideo(inputPath, tempOutput, videoConfig, false)
-		if err != nil {
-			return fmt.Errorf("failed to reencode %s: %v", fileName, err)
+	var sb strings.Builder
+	fmt.Println("Step 1: Re-encoding individual files...")
+	for i, name := range files {
+		in := filepath.Join(inputDir, name)
+		tempOut := filepath.Join(tempDir, fmt.Sprintf("seg_%03d.%s", i, cfg.OutputExtension))
+		fmt.Printf("  [%d/%d] %s → %s\n", i+1, len(files), name, filepath.Base(tempOut))
+		if err := CompressVideo(in, tempOut, cfg, false); err != nil {
+			return fmt.Errorf("failed to reencode %s: %v", name, err)
 		}
-
-		// Add to file list
-		listContent.WriteString(fmt.Sprintf("file '%s'\n", tempOutput))
+		sb.WriteString(fmt.Sprintf("file '%s'\n", tempOut))
+	}
+	if err := os.WriteFile(listFile, []byte(sb.String()), 0644); err != nil {
+		return fmt.Errorf("failed to write list file: %v", err)
 	}
 
-	// Write the file list
-	err = os.WriteFile(listFile, []byte(listContent.String()), 0644)
-	if err != nil {
-		return fmt.Errorf("failed to write file list: %v", err)
+	// Merge re-encoded segments
+	fmt.Println("Step 2: Merging re-encoded segments...")
+	filter := fmt.Sprintf(
+		"scale=%d:%d:force_original_aspect_ratio=decrease,"+
+			"pad=%d:%d:(ow-iw)/2:(oh-ih)/2,setsar=1",
+		cfg.Width, cfg.Height, cfg.Width, cfg.Height,
+	)
+	args := []string{
+		"-f", "concat", "-safe", "0",
+		"-i", listFile,
+		"-vf", filter,
 	}
+	// Insert codec+bitrate parameters
+	args = append(args, ffmpeg.DetermineCodec(ext, cfg)...)
+	// Force container, overwrite
+	args = append(args,
+		"-f", strings.TrimPrefix(ext, "."), outputPath, "-y",
+	)
 
-	// Check for ffmpeg
-	ffmpegPath, err := ffmpeg.CheckFFmpeg()
-	if err != nil {
-		return fmt.Errorf("ffmpeg not found: %v", err)
-	}
-
-	fmt.Println("\nStep 2: Merging reencoded files...")
-
-	var cmd *exec.Cmd
-	if videoConfig.Encoder == "gpu" {
-		// Merge all reencoded files with padding and aspect ratio preservation using GPU
-		cmd = exec.Command(ffmpegPath,
-			"-f", "concat",
-			"-safe", "0",
-			"-i", listFile,
-			"-c:v", "hevc_nvenc", // Use NVIDIA GPU encoder
-			"-preset", videoConfig.Preset,
-			"-rc", "vbr", // Variable bitrate
-			"-vf", fmt.Sprintf("scale=%d:%d:force_original_aspect_ratio=decrease,pad=%d:%d:(ow-iw)/2:(oh-ih)/2,setsar=1",
-				videoConfig.Width, videoConfig.Height,
-				videoConfig.Width, videoConfig.Height),
-			outputPath,
-			"-y",
-		)
-	} else {
-		// Merge all reencoded files with padding and aspect ratio preservation using CPU
-		cmd = exec.Command(ffmpegPath,
-			"-f", "concat",
-			"-safe", "0",
-			"-i", listFile,
-			"-c:v", "libx265", // Use CPU HEVC encoder
-			"-preset", videoConfig.Preset,
-			"-vf", fmt.Sprintf("scale=%d:%d:force_original_aspect_ratio=decrease,pad=%d:%d:(ow-iw)/2:(oh-ih)/2,setsar=1",
-				videoConfig.Width, videoConfig.Height,
-				videoConfig.Width, videoConfig.Height),
-			outputPath,
-			"-y",
-		)
-	}
-
+	cmd := exec.Command(cfg.FfmpegPath, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to merge videos: %v", err)
 	}
 
-	fmt.Println("Video merge complete!")
-	fmt.Printf("Output saved to: %s\n", outputPath)
-
+	fmt.Printf("Merge complete, output: %s\n", outputPath)
 	return nil
 }

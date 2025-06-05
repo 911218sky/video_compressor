@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"video_compressor/src/config"
 	"video_compressor/src/utils"
@@ -14,7 +15,7 @@ import (
 func main() {
 	// Parse command line arguments
 	inputPath := flag.String("input", "", "Input video file path")
-	outputPath := flag.String("output", "", "Output video file path")
+	outputPath := flag.String("output", "", "Output video file path (default: use input file name)")
 
 	// Video compression parameters
 	mode := flag.String("mode", "compress", "Mode (options: compress, merge)")
@@ -29,10 +30,19 @@ func main() {
 
 	flag.Parse()
 
+	// Trim whitespace from input and output paths
+	*inputPath = strings.TrimSpace(*inputPath)
+	*outputPath = strings.TrimSpace(*outputPath)
+
 	// Check if input file exists
 	if _, err := os.Stat(*inputPath); os.IsNotExist(err) {
 		fmt.Printf("Error: Input file not found: %s\n", *inputPath)
 		return
+	}
+
+	// If output path is not specified, use input file name
+	if *outputPath == "" {
+		*outputPath = filepath.Base(*inputPath)
 	}
 
 	// Create output directory if it doesn't exist

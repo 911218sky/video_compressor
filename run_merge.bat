@@ -20,7 +20,7 @@ set ENCODER=gpu
 @REM mp4, mkv, avi, flv, webm, mov, wmv, ts
 set OUTPUT_EXTENSION=mp4
 @REM reverse the order of the files to be merged
-set REVERSE=true
+set REVERSE=false
 
 :: Show current parameters
 echo ================================================

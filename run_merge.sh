@@ -18,7 +18,7 @@ ENCODER="gpu"
 # mp4, mkv, avi, flv, webm, mov, wmv, ts
 OUTPUT_EXTENSION="mp4"
 # Reverse the order of the files to be merged
-REVERSE=true
+REVERSE=false
 
 # Show current parameters
 echo ================================================

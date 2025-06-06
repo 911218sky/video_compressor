@@ -181,9 +181,10 @@ func MergeVideos(inputDir, outputPath string, cfg config.VideoConfig) error {
 		})
 	}
 
-	// Print first 10 files after sorting
-	fmt.Printf("First %d files after sorting:\n", min(len(files), 10))
-	for i, name := range files[:min(len(files), 10)] {
+	// Print first 20 files after sorting
+	maxShow := 20
+	fmt.Printf("First %d files after sorting:\n", min(len(files), maxShow))
+	for i, name := range files[:min(len(files), maxShow)] {
 		fmt.Printf("  %d: %s\n", i+1, name)
 	}
 

@@ -17,7 +17,7 @@ func main() {
 	// Parse command line arguments
 	inputPath := flag.String("input", "", "Input video file path")
 	outputPath := flag.String("output", "", "Output video file path (default: use input file name)")
-	reverse := flag.Bool("reverse", false, "Reverse the order of the files to be merged")
+	reverse := flag.String("reverse", "false", "Reverse the order of the files to be merged")
 
 	// Video compression parameters
 	mode := flag.String("mode", "compress", "Mode (options: compress, merge)")
@@ -71,10 +71,6 @@ func main() {
 	// Remove the original extension
 	name := strings.TrimSuffix(base, ext)
 
-	fmt.Println("Name:", name)
-	fmt.Println("Ext:", ext)
-	fmt.Println("Output extension:", *outputExtension)
-
 	// If no output path specified, derive from input file's base name and add .mp4
 	if *outputPath == "" {
 		// Append the new .mp4 extension
@@ -107,7 +103,7 @@ func main() {
 		Height:          *height,
 		Encoder:         *encoder,
 		OutputExtension: *outputExtension,
-		Reverse:         *reverse,
+		Reverse:         *reverse == "true",
 	}
 
 	// If custom width/height is specified, clear resolution to prevent override

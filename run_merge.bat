@@ -19,6 +19,8 @@ set HEIGHT=0
 set ENCODER=gpu
 @REM mp4, mkv, avi, flv, webm, mov, wmv, ts
 set OUTPUT_EXTENSION=mp4
+@REM reverse the order of the files to be merged
+set REVERSE=true
 
 :: Show current parameters
 echo ================================================
@@ -35,6 +37,7 @@ echo Width:                %WIDTH%
 echo Height:               %HEIGHT%
 echo Encoder:              %ENCODER%
 echo Output extension:     %OUTPUT_EXTENSION%
+echo Reverse:              %REVERSE%
 echo ================================================
 
 :: Check if input file or directory exists
@@ -63,7 +66,8 @@ go run src\main.go ^
     -width %WIDTH% ^
     -height %HEIGHT% ^
     -encoder "%ENCODER%" ^
-    -output-extension "%OUTPUT_EXTENSION%"
+    -output-extension "%OUTPUT_EXTENSION%" ^
+    -reverse "%REVERSE%"
 
 :: Show message based on result
 if %ERRORLEVEL% equ 0 (

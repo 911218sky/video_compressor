@@ -17,6 +17,7 @@ func main() {
 	// Parse command line arguments
 	inputPath := flag.String("input", "", "Input video file path")
 	outputPath := flag.String("output", "", "Output video file path (default: use input file name)")
+	reverse := flag.Bool("reverse", false, "Reverse the order of the files to be merged")
 
 	// Video compression parameters
 	mode := flag.String("mode", "compress", "Mode (options: compress, merge)")
@@ -106,6 +107,7 @@ func main() {
 		Height:          *height,
 		Encoder:         *encoder,
 		OutputExtension: *outputExtension,
+		Reverse:         *reverse,
 	}
 
 	// If custom width/height is specified, clear resolution to prevent override

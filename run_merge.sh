@@ -17,6 +17,8 @@ HEIGHT=0
 ENCODER="gpu"
 # mp4, mkv, avi, flv, webm, mov, wmv, ts
 OUTPUT_EXTENSION="mp4"
+# Reverse the order of the files to be merged
+REVERSE=true
 
 # Show current parameters
 echo ================================================
@@ -33,6 +35,7 @@ echo "Width: $WIDTH"
 echo "Height: $HEIGHT"
 echo "Encoder: $ENCODER"
 echo "Output extension: $OUTPUT_EXTENSION"
+echo "Reverse: $REVERSE"
 echo ================================================
 
 # Check if input file or directory exists
@@ -58,7 +61,8 @@ if ./video_compressor \
   -width      "$WIDTH" \
   -height     "$HEIGHT" \
   -encoder    "$ENCODER" \
-  -output-extension  "$OUTPUT_EXTENSION"
+  -output-extension  "$OUTPUT_EXTENSION" \
+  -reverse    "$REVERSE"
 then
   echo "Video compression completed!"
 else

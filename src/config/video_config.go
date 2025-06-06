@@ -76,4 +76,7 @@ type VideoConfig struct {
 	Height          int    // Target height (0 means auto). If set, Resolution will be ignored
 	Encoder         string // "gpu" for NVIDIA HEVC or "cpu" for libx265
 	OutputExtension string // ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv"
+
+	// Reverse the order of the files to be merged
+	Reverse bool
 }

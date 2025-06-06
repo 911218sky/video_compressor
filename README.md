@@ -74,6 +74,7 @@ chmod +x video_compressor run.sh run_merge.sh
 |-----------|-------------|---------|------------------|
 | `-input` | Input video file/directory path | **Required** | `video.mp4`, `./videos/` |
 | `-output` | Output video file path | Auto-generated | `output.mp4` |
+| `-reverse` | Reverse the order of the files to be merged | `true` | `true`, `false` |
 | `-mode` | Operation mode | `compress` | `compress`, `merge` |
 
 ### 📹 Video Settings

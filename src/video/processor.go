@@ -171,9 +171,21 @@ func MergeVideos(inputDir, outputPath string, cfg config.VideoConfig) error {
 	}
 
 	// Sort files
-	sort.Slice(files, func(i, j int) bool {
-		return sortorder.NaturalLess(files[i], files[j])
-	})
+	if cfg.Reverse {
+		sort.Slice(files, func(i, j int) bool {
+			return sortorder.NaturalLess(files[i], files[j])
+		})
+	} else {
+		sort.Slice(files, func(i, j int) bool {
+			return sortorder.NaturalLess(files[j], files[i])
+		})
+	}
+
+	// Print first 10 files after sorting
+	fmt.Printf("First %d files after sorting:\n", min(len(files), 10))
+	for i, name := range files[:min(len(files), 10)] {
+		fmt.Printf("  %d: %s\n", i+1, name)
+	}
 
 	// Re-encode and generate list
 	listFile := filepath.Join(tempDir, "files.txt")

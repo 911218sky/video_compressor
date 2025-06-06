@@ -16,7 +16,7 @@ FPS=32
 RESOLUTION="1080p"
 BITRATE=0
 PRESET="p3"
-CQ=32
+CQ=16
 # If width and height are set, resolution will be ignored (0 is auto)
 WIDTH=0
 HEIGHT=0

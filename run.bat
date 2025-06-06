@@ -19,7 +19,7 @@ set "FPS=32"
 set "RESOLUTION=1080p"
 set "BITRATE=0"
 set "PRESET=p3"
-set "CQ=32"
+set "CQ=16"
 REM If width and height are set, resolution will be ignored (0 is auto)
 set "WIDTH=0"
 set "HEIGHT=0"

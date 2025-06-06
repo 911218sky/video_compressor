@@ -90,7 +90,7 @@ chmod +x video_compressor run.sh run_merge.sh
 | Parameter | Description | Default | Range/Options |
 |-----------|-------------|---------|---------------|
 | `-preset` | Encoder preset | `p7` | `p1` (fastest) ~ `p7` (best quality) |
-| `-cq` | Constant quality value | `32` | `0` (best) ~ `51` (worst) |
+| `-cq` | Constant quality value | `16` | `0` (best) ~ `51` (worst) |
 | `-bitrate` | Custom bitrate in Kbps | `0` (auto) | `2000`, `5000`, `10000` |
 
 ### 🔧 Technical Settings

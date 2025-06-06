@@ -11,7 +11,7 @@ set FPS=32
 set RESOLUTION=
 set BITRATE=0
 set PRESET=p3
-set CQ=32
+set CQ=16
 @REM 0 is auto (If width and height are set >0, resolution will be ignored)
 set WIDTH=0
 set HEIGHT=0

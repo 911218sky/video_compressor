@@ -12,6 +12,8 @@ import (
 	"video_compressor/src/config"
 	"video_compressor/src/ffmpeg"
 	"video_compressor/src/utils"
+
+	"github.com/fvbommel/sortorder"
 )
 
 // CompressVideo compresses the video using ffmpeg
@@ -170,19 +172,7 @@ func MergeVideos(inputDir, outputPath string, cfg config.VideoConfig) error {
 
 	// Sort files
 	sort.Slice(files, func(i, j int) bool {
-		var ni, nj int
-		fmt.Sscanf(files[i], "%d", &ni)
-		fmt.Sscanf(files[j], "%d", &nj)
-		if ni > 0 && nj > 0 {
-			return ni < nj
-		}
-		if ni > 0 {
-			return true
-		}
-		if nj > 0 {
-			return false
-		}
-		return files[i] < files[j]
+		return sortorder.NaturalLess(files[i], files[j])
 	})
 
 	// Re-encode and generate list

@@ -81,10 +81,10 @@ chmod +x video_compressor run.sh run_merge.sh
 
 | Parameter | Description | Default | Options/Examples |
 |-----------|-------------|---------|------------------|
-| `-fps` | Frame rate | `32` | `24`, `30`, `60` |
-| `-resolution` | Video resolution | Auto (1080p) | `1080p`, `720p`, `480p` |
-| `-width` | Custom width (overrides resolution) | `0` (auto) | `1920`, `1280` |
-| `-height` | Custom height (overrides resolution) | `0` (auto) | `1080`, `720` |
+| `-fps` | Frame rate | `32` | `24`, `30`, `60`, ... |
+| `-resolution` | Video resolution | Auto (1080p) | `4k` ,`2k` ,`1080p`, `720p`, `480p`, ... |
+| `-width` | Custom width (overrides resolution) | `0` (auto) | `1920`, `1280`, ... |
+| `-height` | Custom height (overrides resolution) | `0` (auto) | `1080`, `720`, ... |
 
 ### 🎚️ Quality Settings
 

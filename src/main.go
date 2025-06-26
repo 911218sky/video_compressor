@@ -130,13 +130,14 @@ func main() {
 		_, _, videoConfig.Bitrate = utils.GetRecommendedSettings(videoConfig.Resolution, 0, 0)
 	}
 
-	if *mode == "compress" {
+	switch *mode {
+	case "compress":
 		// Compress the video
 		if err := video.CompressVideo(*inputPath, *outputPath, videoConfig, true); err != nil {
 			fmt.Printf("Error: %v\n", err)
 			return
 		}
-	} else if *mode == "merge" {
+	case "merge":
 		// Merge the video
 		if err := video.MergeVideos(*inputPath, *outputPath, videoConfig); err != nil {
 			fmt.Printf("Error: %v\n", err)

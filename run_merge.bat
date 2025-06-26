@@ -10,6 +10,7 @@ set MODE=merge
 set FPS=32
 set RESOLUTION=
 set BITRATE=0
+@REM p1 - p7 (p7 is the best quality)
 set PRESET=p3
 set CQ=16
 @REM 0 is auto (If width and height are set >0, resolution will be ignored)
@@ -54,7 +55,8 @@ if not exist "%OUTPUT_DIR%" (
 )
 
 :: Run Go program
-go run src\main.go ^
+if exist video_compressor.exe (
+video_compressor.exe ^
     -input "%INPUT_FILE%" ^
     -output "%OUTPUT_FILE%" ^
     -mode "%MODE%" ^
@@ -66,8 +68,13 @@ go run src\main.go ^
     -width %WIDTH% ^
     -height %HEIGHT% ^
     -encoder "%ENCODER%" ^
-    -output-extension "%OUTPUT_EXTENSION%" ^
-    -reverse "%REVERSE%"
+      -output-extension "%OUTPUT_EXTENSION%" ^
+      -reverse "%REVERSE%"
+) else (
+    echo Error: video_compressor.exe not found.
+    pause
+    exit /b 1
+)
 
 :: Show message based on result
 if %ERRORLEVEL% equ 0 (

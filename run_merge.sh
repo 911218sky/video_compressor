@@ -10,6 +10,7 @@ MODE="merge"
 FPS=32
 RESOLUTION=""
 BITRATE=0
+# p1 - p7 (p7 is the best quality)
 PRESET="p3"
 CQ=16
 WIDTH=0      # If width and height are set (>0), resolution will be ignored

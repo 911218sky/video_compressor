@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"video_compressor/src/config"
 	"video_compressor/src/ffmpeg"
@@ -70,11 +71,17 @@ func main() {
 	ext := filepath.Ext(base)
 	// Remove the original extension
 	name := strings.TrimSuffix(base, ext)
+	// get timestamp
+	ts := time.Now().Format("150405")
 
 	// If no output path specified, derive from input file's base name and add .mp4
 	if *outputPath == "" {
 		// Append the new .mp4 extension
-		*outputPath = fmt.Sprintf("%s.%s", name, strings.TrimPrefix(*outputExtension, "."))
+		*outputPath = fmt.Sprintf("%s_%s.%s",
+			name,
+			ts,
+			strings.TrimPrefix(*outputExtension, "."),
+		)
 	}
 
 	// Create output directory if it doesn't exist

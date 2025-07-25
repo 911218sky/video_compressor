@@ -219,6 +219,10 @@ func MergeVideos(inputDir, outputPath string, cfg config.VideoConfig) error {
 		return fmt.Errorf("no files were successfully processed")
 	}
 
+	// Write list file
+	if err := os.WriteFile(listFile, []byte(sb.String()), 0644); err != nil {
+		return fmt.Errorf("failed to write list file: %v", err)
+	}
 	fmt.Printf("Successfully processed %d out of %d files\n", successCount, len(files))
 
 	// Merge re-encoded segments

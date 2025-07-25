@@ -14,6 +14,27 @@ import (
 	"video_compressor/src/ffmpeg"
 )
 
+// checks if the video file is valid
+func IsVideoFileValid(inputPath string) bool {
+	ffmpegPath, err := ffmpeg.CheckFFmpeg()
+	if err != nil {
+		return false
+	}
+
+	args := []string{
+		"-v", "error",
+		"-i", inputPath,
+		"-f", "null",
+		"-",
+	}
+
+	cmd := exec.Command(ffmpegPath, args...)
+	output, err := cmd.CombinedOutput()
+
+	// if there is no error and no error output, the video is valid
+	return err == nil && len(strings.TrimSpace(string(output))) == 0
+}
+
 // GetVideoSize returns the size of the video file in bytes
 func GetVideoSize(videoPath string) (int64, error) {
 	fileInfo, err := os.Stat(videoPath)

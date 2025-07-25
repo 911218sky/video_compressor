@@ -18,6 +18,11 @@ import (
 
 // CompressVideo compresses the video using ffmpeg
 func CompressVideo(inputPath, outputPath string, cfg config.VideoConfig, verbose bool) error {
+	// Check if the video file is valid
+	if !utils.IsVideoFileValid(inputPath) {
+		return fmt.Errorf("invalid video file: %s", inputPath)
+	}
+
 	// Validate input format
 	if !ffmpeg.IsSupportedFormat(inputPath) {
 		return fmt.Errorf(
@@ -197,9 +202,12 @@ func MergeVideos(inputDir, outputPath string, cfg config.VideoConfig) error {
 		in := filepath.Join(inputDir, name)
 		tempOut := filepath.Join(tempDir, fmt.Sprintf("seg_%03d.%s", i, cfg.OutputExtension))
 		fmt.Printf("  [%d/%d] %s → %s\n", i+1, len(files), name, filepath.Base(tempOut))
+		if !utils.IsVideoFileValid(in) {
+			fmt.Printf("❌ Invalid video file: %s\n", in)
+			continue
+		}
 		if err := CompressVideo(in, tempOut, cfg, false); err != nil {
 			fmt.Printf("❌ Error processing %s: %v\n", name, err)
-			fmt.Printf("⏩ Skipping and continuing...\n")
 			continue
 		}
 		sb.WriteString(fmt.Sprintf("file '%s'\n", tempOut))

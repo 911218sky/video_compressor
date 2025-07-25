@@ -192,18 +192,26 @@ func MergeVideos(inputDir, outputPath string, cfg config.VideoConfig) error {
 	listFile := filepath.Join(tempDir, "files.txt")
 	var sb strings.Builder
 	fmt.Println("Step 1: Re-encoding individual files...")
+	successCount := 0
 	for i, name := range files {
 		in := filepath.Join(inputDir, name)
 		tempOut := filepath.Join(tempDir, fmt.Sprintf("seg_%03d.%s", i, cfg.OutputExtension))
 		fmt.Printf("  [%d/%d] %s → %s\n", i+1, len(files), name, filepath.Base(tempOut))
 		if err := CompressVideo(in, tempOut, cfg, false); err != nil {
-			return fmt.Errorf("failed to reencode %s: %v", name, err)
+			fmt.Printf("❌ Error processing %s: %v\n", name, err)
+			fmt.Printf("⏩ Skipping and continuing...\n")
+			continue
 		}
 		sb.WriteString(fmt.Sprintf("file '%s'\n", tempOut))
+		successCount++
 	}
-	if err := os.WriteFile(listFile, []byte(sb.String()), 0644); err != nil {
-		return fmt.Errorf("failed to write list file: %v", err)
+
+	// Check if no files were successfully processed
+	if successCount == 0 {
+		return fmt.Errorf("no files were successfully processed")
 	}
+
+	fmt.Printf("Successfully processed %d out of %d files\n", successCount, len(files))
 
 	// Merge re-encoded segments
 	fmt.Println("Step 2: Merging re-encoded segments...")
